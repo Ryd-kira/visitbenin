@@ -1,0 +1,46 @@
+{
+  "name": "@visitbenin/backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon --watch src --ext js src/server.js",
+    "start": "node src/server.js",
+    "build": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "migrate:prod": "prisma migrate deploy",
+    "seed": "node prisma/seed.js",
+    "studio": "prisma studio",
+    "generate": "prisma generate",
+    "seed:planner": "node prisma/seed-planner.js",
+    "seed:events": "node prisma/seed-events.js",
+    "migrate:bookings": "psql $DATABASE_URL -f prisma/migrations/add_bookings.sql",
+    "seed:marketplace": "node prisma/seed-marketplace.js",
+    "migrate:marketplace": "psql $DATABASE_URL -f prisma/migrations/add_marketplace.sql",
+    "migrate:fresh": "prisma migrate reset --force && node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.0.0",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^5.0.0",
+    "express-rate-limit": "^7.2.0",
+    "helmet": "^7.1.0",
+    "ioredis": "^5.3.2",
+    "joi": "^17.12.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "resend": "^3.2.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "prisma": "^5.22.0"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  }
+}

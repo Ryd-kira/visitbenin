@@ -1,0 +1,38 @@
+name: visitbenin-api
+services:
+  - name: api
+    type: web
+    git:
+      repository: github.com/TON_USERNAME/visitbenin
+      branch: main
+      build_command: "cd backend && npm ci && npx prisma generate"
+      run_command: "cd backend && npx prisma migrate deploy && npm start"
+    instance_types:
+      - nano
+    regions:
+      - fra         # Frankfurt — proche de l'Afrique de l'Ouest
+    ports:
+      - port: 3001
+        protocol: http
+    env:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        secret: DATABASE_URL
+      - key: DIRECT_URL
+        secret: DIRECT_URL
+      - key: JWT_ACCESS_SECRET
+        secret: JWT_ACCESS_SECRET
+      - key: JWT_REFRESH_SECRET
+        secret: JWT_REFRESH_SECRET
+      - key: FRONTEND_URL
+        secret: FRONTEND_URL
+      - key: ADMIN_URL
+        secret: ADMIN_URL
+      - key: ANTHROPIC_API_KEY
+        secret: ANTHROPIC_API_KEY
+    health_checks:
+      - path: /health
+        port: 3001
+        interval: 30
+        timeout: 5

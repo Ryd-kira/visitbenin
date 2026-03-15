@@ -1,0 +1,689 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ── ENUMS ───────────────────────────────────────
+
+enum Role {
+  user
+  editor
+  admin
+}
+
+enum PlaceType {
+  nature
+  culture
+  historique
+  plage
+  religion
+  safari       // conservé pour compatibilité BDD
+  religieux    // conservé pour compatibilité BDD
+  divertissement // conservé pour compatibilité BDD
+  autre
+}
+
+enum PriceRange {
+  low
+  medium
+  high
+  luxury
+}
+
+enum SchoolType {
+  maternelle
+  primaire
+  secondaire
+  college     // conservé pour compatibilité BDD
+  lycee
+  universite
+  formation
+}
+
+enum SchoolProgram {
+  francais
+  bilingue
+  international
+  anglophone
+  anglais    // conservé pour compatibilité BDD
+  local      // conservé pour compatibilité BDD
+}
+
+enum EntityType {
+  place
+  restaurant
+  school
+  hotel
+}
+
+enum PartnerType {
+  agence_tourisme
+  hebergement
+  transport
+  excursion
+  restaurant
+  autre
+}
+
+enum TripStatus {
+  draft
+  planned
+  ongoing
+  completed
+  cancelled
+}
+
+enum TripMode {
+  solo
+  agency
+  group
+}
+
+enum StepType {
+  hebergement
+  transport
+  activite
+  excursion
+  restaurant
+  decouverte
+  location
+  autre
+}
+
+enum RentalType {
+  Voiture
+  Moto
+  Appart
+}
+
+// ── USER ────────────────────────────────────────
+
+model User {
+  id             String         @id @default(uuid())
+  email          String         @unique
+  password_hash  String
+  name           String
+  avatar_url     String?
+  role           Role           @default(user)
+  is_verified    Boolean        @default(false)
+  verify_token   String?
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+
+  reviews        Review[]
+  saved_items    SavedItem[]
+  trips          Trip[]
+  bookings       Booking[]
+  shops          Shop[]    @relation("shop_owner")
+  orders         Order[]   @relation("user_orders")
+  places         Place[]        @relation("PlaceCreator")
+  restaurants    Restaurant[]   @relation("RestaurantCreator")
+  schools        School[]       @relation("SchoolCreator")
+  refresh_tokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  user_id    String
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// ── CITIES ─────────────────────────────────────
+
+model City {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  slug        String       @unique
+  region      String
+  description String?
+  latitude    Decimal      @db.Decimal(10, 7)
+  longitude   Decimal      @db.Decimal(10, 7)
+  population  Int?
+  cover_image String?
+
+  places      Place[]
+  restaurants Restaurant[]
+  schools     School[]
+  hotels      Hotel[]
+  partners    Partner[]
+
+  @@map("cities")
+}
+
+// ── PLACES ─────────────────────────────────────
+
+model Place {
+  id            String      @id @default(uuid())
+  name          String
+  slug          String      @unique
+  type          PlaceType
+  description   String
+  short_desc    String      @db.VarChar(300)
+  city_id       String
+  address       String?
+  latitude      Decimal     @db.Decimal(10, 7)
+  longitude     Decimal     @db.Decimal(10, 7)
+  cover_image   String?
+  gallery       String[]    @default([])
+  entry_fee     Int?
+  opening_hours Json?
+  website       String?
+  phone         String?     @db.VarChar(20)
+  rating        Decimal     @default(0) @db.Decimal(2, 1)
+  review_count  Int         @default(0)
+  is_featured   Boolean     @default(false)
+  is_published  Boolean     @default(false)
+  is_unesco     Boolean     @default(false)
+  tags          String[]    @default([])
+  created_by    String
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+
+  city          City        @relation(fields: [city_id], references: [id])
+  creator       User        @relation("PlaceCreator", fields: [created_by], references: [id])
+  reviews       Review[]
+  saved_by      SavedItem[]
+  trip_steps    TripStep[]  @relation("TripStepPlace")
+
+  @@index([type])
+  @@index([city_id])
+  @@index([is_published])
+  @@index([rating])
+  @@map("places")
+}
+
+// ── RESTAURANTS ────────────────────────────────
+
+model Restaurant {
+  id            String     @id @default(uuid())
+  name          String
+  slug          String     @unique
+  description   String
+  short_desc    String?    @db.VarChar(300)
+  city_id       String
+  address       String?
+  latitude      Decimal?   @db.Decimal(10, 7)
+  longitude     Decimal?   @db.Decimal(10, 7)
+  cover_image   String?
+  gallery       String[]   @default([])
+  cuisine_type  String?                      // ancien champ — conservé pour compatibilité
+  cuisine_types String[]   @default([])
+  has_reservation Boolean  @default(false)   // ancien champ — conservé pour compatibilité
+  menu_items    Json?                         // ancien champ — conservé pour compatibilité
+  price_range   PriceRange @default(medium)
+  opening_hours Json?
+  website       String?
+  phone         String?
+  has_delivery  Boolean    @default(false)
+  has_wifi      Boolean    @default(false)
+  has_parking   Boolean    @default(false)
+  has_ac        Boolean    @default(false)
+  rating        Decimal    @default(0) @db.Decimal(2, 1)
+  review_count  Int        @default(0)
+  is_featured   Boolean    @default(false)
+  is_published  Boolean    @default(false)
+  tags          String[]   @default([])
+  created_by    String
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  city          City       @relation(fields: [city_id], references: [id])
+  creator       User       @relation("RestaurantCreator", fields: [created_by], references: [id])
+  reviews       Review[]
+  saved_by      SavedItem[]
+
+  @@index([city_id])
+  @@index([is_published])
+  @@map("restaurants")
+}
+
+// ── SCHOOLS ────────────────────────────────────
+
+model School {
+  id                   String        @id @default(uuid())
+  name                 String
+  slug                 String        @unique
+  school_type          SchoolType
+  program              SchoolProgram
+  description          String
+  short_desc           String?       @db.VarChar(300)
+  city_id              String
+  address              String?
+  latitude             Decimal?      @db.Decimal(10, 7)
+  longitude            Decimal?      @db.Decimal(10, 7)
+  cover_image          String?
+  logo                 String?
+  gallery              String[]  @default([])    // ancien champ — conservé pour compatibilité
+  website              String?
+  phone                String?
+  email                String?
+  student_count        Int?
+  founded_year         Int?
+  fees_range_min       Int?
+  fees_range_max       Int?
+  levels               String[]      @default([])
+  languages            String[]      @default([])
+  facilities           String[]      @default([])
+  bac_rate             Decimal?      @db.Decimal(4, 1)
+  is_aefe              Boolean       @default(false)
+  accepts_international Boolean      @default(false)
+  rating               Decimal       @default(0) @db.Decimal(2, 1)
+  review_count         Int           @default(0)
+  is_featured          Boolean       @default(false)
+  is_published         Boolean       @default(false)
+  created_by           String
+  created_at           DateTime      @default(now())
+  updated_at           DateTime      @updatedAt
+
+  city                 City          @relation(fields: [city_id], references: [id])
+  creator              User          @relation("SchoolCreator", fields: [created_by], references: [id])
+  reviews              Review[]
+  saved_by             SavedItem[]
+
+  @@index([city_id])
+  @@index([is_published])
+  @@map("schools")
+}
+
+// ── HOTELS ─────────────────────────────────────
+
+model Hotel {
+  id            String     @id @default(uuid())
+  name          String
+  slug          String     @unique
+  description   String
+  city_id       String
+  address       String?
+  latitude      Decimal?   @db.Decimal(10, 7)
+  longitude     Decimal?   @db.Decimal(10, 7)
+  cover_image   String?
+  stars         Int        @default(3)
+  price_range   PriceRange @default(medium)
+  website       String?
+  phone         String?
+  rating        Decimal    @default(0) @db.Decimal(2, 1)
+  review_count  Int        @default(0)
+  is_published  Boolean    @default(false)
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  city          City       @relation(fields: [city_id], references: [id])
+  reviews       Review[]
+  saved_by      SavedItem[]
+
+  @@map("hotels")
+}
+
+// ── REVIEWS ────────────────────────────────────
+
+model Review {
+  id            String     @id @default(uuid())
+  user_id       String
+  entity_type   EntityType
+  entity_id     String
+  rating        Int
+  title         String?
+  content       String
+  sub_ratings   Json?
+  visited_at    DateTime?
+  is_verified   Boolean    @default(false)
+  is_published  Boolean    @default(true)
+  helpful_count Int        @default(0)
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  user          User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  place         Place?      @relation(fields: [entity_id], references: [id], map: "review_place_fk")
+  restaurant    Restaurant? @relation(fields: [entity_id], references: [id], map: "review_restaurant_fk")
+  school        School?     @relation(fields: [entity_id], references: [id], map: "review_school_fk")
+  hotel         Hotel?      @relation(fields: [entity_id], references: [id], map: "review_hotel_fk")
+
+  @@index([entity_type, entity_id])
+  @@index([user_id])
+  @@map("reviews")
+}
+
+// ── SAVED ITEMS ────────────────────────────────
+
+model SavedItem {
+  id          String     @id @default(uuid())
+  user_id     String
+  entity_type EntityType
+  entity_id   String
+  created_at  DateTime   @default(now())
+
+  user        User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  place       Place?      @relation(fields: [entity_id], references: [id], map: "saved_place_fk")
+  restaurant  Restaurant? @relation(fields: [entity_id], references: [id], map: "saved_restaurant_fk")
+  school      School?     @relation(fields: [entity_id], references: [id], map: "saved_school_fk")
+  hotel       Hotel?      @relation(fields: [entity_id], references: [id], map: "saved_hotel_fk")
+
+  @@unique([user_id, entity_type, entity_id])
+  @@map("saved_items")
+}
+
+// ── EVENTS ─────────────────────────────────────
+
+model Event {
+  id           String    @id @default(uuid())
+  name         String
+  slug         String    @unique
+  description  String
+  location     String
+  city         String
+  latitude     Decimal?  @db.Decimal(10, 7)
+  longitude    Decimal?  @db.Decimal(10, 7)
+  cover_image  String?
+  date_start   DateTime
+  date_end     DateTime?
+  is_recurring Boolean   @default(false)
+  recurrence   String?
+  tags         String[]  @default([])
+  is_published Boolean   @default(false)
+  created_at   DateTime  @default(now())
+
+  @@map("events")
+}
+
+// ── PARTENAIRES ────────────────────────────────
+
+model Partner {
+  id           String      @id @default(uuid())
+  name         String
+  slug         String      @unique
+  type         PartnerType
+  description  String
+  short_desc   String?
+  logo         String?
+  cover_image  String?
+  website      String?
+  email        String?
+  phone        String?
+  address      String?
+  city_id      String?
+  latitude     Decimal?    @db.Decimal(10, 7)
+  longitude    Decimal?    @db.Decimal(10, 7)
+  services     String[]    @default([])
+  languages    String[]    @default([])
+  price_range  PriceRange  @default(medium)
+  is_certified Boolean     @default(false)
+  is_featured  Boolean     @default(false)
+  is_published Boolean     @default(false)
+  rating       Decimal     @default(0) @db.Decimal(3, 2)
+  review_count Int         @default(0)
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+
+  city         City?       @relation(fields: [city_id], references: [id])
+  trip_steps   TripStep[]  @relation("TripStepPartner")
+
+  @@map("partners")
+}
+
+// ── PLANIFICATEUR ──────────────────────────────
+
+model Trip {
+  id          String     @id @default(uuid())
+  user_id     String
+  title       String
+  description String?
+  mode        TripMode   @default(solo)
+  status      TripStatus @default(draft)
+  date_start  DateTime?
+  date_end    DateTime?
+  budget      Int?
+  nb_persons  Int        @default(1)
+  cities      String[]   @default([])
+  cover_image String?
+  is_public   Boolean    @default(false)
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  user        User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  steps       TripStep[]
+
+  @@map("trips")
+}
+
+model TripStep {
+  id          String    @id @default(uuid())
+  trip_id     String
+  type        StepType
+  title       String
+  description String?
+  date        DateTime?
+  duration    Int?
+  price       Int?
+  address     String?
+  latitude    Decimal?  @db.Decimal(10, 7)
+  longitude   Decimal?  @db.Decimal(10, 7)
+  notes       String?
+  is_booked   Boolean   @default(false)
+  order       Int       @default(0)
+  place_id    String?
+  partner_id  String?
+  created_at  DateTime  @default(now())
+
+  trip        Trip      @relation(fields: [trip_id],     references: [id], onDelete: Cascade)
+  place       Place?    @relation("TripStepPlace",    fields: [place_id],   references: [id])
+  partner     Partner?  @relation("TripStepPartner",  fields: [partner_id], references: [id])
+
+  @@map("trip_steps")
+}
+
+// ── ACTIVITÉS (flashcards planificateur) ───────
+
+model Activity {
+  id          String   @id @default(uuid())
+  icon        String
+  title       String
+  description String
+  type        StepType @default(activite)
+  city        String
+  price       Int      @default(0)
+  duration    Int      @default(60)
+  tags        String[] @default([])
+  is_published Boolean @default(true)
+  order       Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@map("activities")
+}
+
+// ── RÉSERVATIONS ──────────────────────────────
+
+enum BookingType {
+  hotel
+  restaurant
+  activity
+  guide
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+  completed
+}
+
+enum PaymentMethod {
+  mtn_money
+  moov_money
+  card
+  cash
+}
+
+enum PaymentStatus {
+  unpaid
+  paid
+  refunded
+}
+
+model Booking {
+  id              String        @id @default(uuid())
+  user_id         String
+  booking_type    BookingType
+  entity_id       String
+  entity_name     String
+  date            DateTime
+  time_slot       String?
+  nb_persons      Int           @default(1)
+  total_price     Int
+  currency        String        @default("XOF")
+  status          BookingStatus @default(pending)
+  payment_method  PaymentMethod?
+  payment_status  PaymentStatus @default(unpaid)
+  payment_ref     String?
+  notes           String?
+  contact_name    String
+  contact_phone   String
+  contact_email   String
+  confirmed_at    DateTime?
+  cancelled_at    DateTime?
+  cancel_reason   String?
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+
+  user            User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+// ── MARKETPLACE ───────────────────────────────
+
+enum ProductCategory {
+  nourriture
+  artisanat
+  vetements
+  beaute
+  electronique
+  services
+  autre
+}
+
+enum OrderStatus {
+  cart
+  pending
+  confirmed
+  shipped
+  delivered
+  cancelled
+}
+
+model Shop {
+  id           String    @id @default(uuid())
+  owner_id     String
+  name         String
+  slug         String    @unique
+  description  String?
+  cover_image  String?
+  city         String
+  address      String?
+  phone        String?
+  whatsapp     String?
+  is_verified  Boolean   @default(false)
+  is_published Boolean   @default(false)
+  rating       Decimal   @default(0) @db.Decimal(3, 2)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  owner        User      @relation("shop_owner", fields: [owner_id], references: [id])
+  products     Product[]
+
+  @@map("shops")
+}
+
+model Product {
+  id           String          @id @default(uuid())
+  shop_id      String
+  name         String
+  slug         String          @unique
+  description  String?
+  price        Int
+  original_price Int?
+  unit         String          @default("unité")
+  stock        Int             @default(0)
+  category     ProductCategory
+  images       String[]        @default([])
+  tags         String[]        @default([])
+  is_published Boolean         @default(false)
+  is_featured  Boolean         @default(false)
+  created_at   DateTime        @default(now())
+  updated_at   DateTime        @updatedAt
+
+  shop         Shop            @relation(fields: [shop_id], references: [id], onDelete: Cascade)
+  order_items  OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  user_id         String?
+  status          OrderStatus @default(cart)
+  total_price     Int         @default(0)
+  delivery_address String?
+  delivery_city   String?
+  contact_name    String?
+  contact_phone   String?
+  contact_email   String?
+  payment_method  PaymentMethod?
+  payment_status  PaymentStatus  @default(unpaid)
+  payment_ref     String?
+  notes           String?
+  confirmed_at    DateTime?
+  delivered_at    DateTime?
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+
+  user            User?       @relation("user_orders", fields: [user_id], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid())
+  order_id    String
+  product_id  String
+  quantity    Int      @default(1)
+  unit_price  Int
+  subtotal    Int
+
+  order       Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [product_id], references: [id])
+
+  @@map("order_items")
+}
+
+// ── LOCATIONS (flashcards planificateur) ───────
+
+model Rental {
+  id           String     @id @default(uuid())
+  icon         String
+  title        String
+  type         RentalType
+  price_day    Int
+  features     String[]   @default([])
+  ideal        String
+  is_published Boolean    @default(true)
+  order        Int        @default(0)
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+
+  @@map("rentals")
+}
