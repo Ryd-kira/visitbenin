@@ -24,15 +24,15 @@ export default function Schools() {
 
   return (
     <div className="min-h-screen bg-sable-light">
-      <div className="bg-[#1B3A5C] py-14 px-8">
+      <div className="bg-[#1B3A5C] py-10 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
           <p className="text-or text-xs uppercase tracking-[0.3em] mb-3">{t('schools.subtitle')}</p>
           <h1 className="font-display font-bold text-5xl text-sable">{t('schools.title')}<br /><em className="text-or">Bénin</em></h1>
-          <p className="text-sable/50 mt-3 max-w-lg">Maternelle, primaire, lycée, université — 152 établissements répertoriés au Bénin.</p>
+          <p className="text-sable/50 mt-3 max-w-lg">Maternelle, primaire, lycée, université — les établissements scolaires répertoriés au Bénin.</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         <div className="flex gap-2 mb-3 flex-wrap">
           {types.map(t => (
             <button key={t.value} onClick={() => { setType(t.value); setPage(1) }}

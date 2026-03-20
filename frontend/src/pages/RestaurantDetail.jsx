@@ -5,6 +5,7 @@ import PageLoader from '@/components/ui/PageLoader'
 import AddToPlannerBtn from '@/components/ui/AddToPlannerBtn'
 import BookingModal from '@/components/ui/BookingModal'
 import { useState } from 'react'
+import MediaCarousel from '@/components/ui/MediaCarousel'
 
 export default function RestaurantDetail() {
   const { slug } = useParams()
@@ -17,18 +18,34 @@ export default function RestaurantDetail() {
 
   return (
     <div className="bg-sable-light min-h-screen">
-      {/* Hero */}
-      <div className="relative h-80 overflow-hidden">
-        <img src={resto.cover_image || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600'} alt={resto.name} className="w-full h-full object-cover brightness-70" />
-        <div className="absolute inset-0 bg-gradient-to-t from-nuit/80 to-transparent" />
-        <div className="absolute bottom-0 left-0 px-8 pb-8">
-          <span className="bg-or text-nuit text-xs font-semibold px-3 py-1 mb-3 inline-block">{resto.cuisine_type}</span>
-          <h1 className="font-display font-bold text-4xl text-sable">{resto.name}</h1>
-          <p className="text-sable/60 text-sm mt-1">📍 {resto.city?.name} · {priceIcons[resto.price_range]} · ★ {Number(resto.rating).toFixed(1)} ({resto.review_count} avis)</p>
+      {/* Breadcrumb */}
+      <div style={{ background: '#0E0A06', padding: '10px 24px', borderBottom: '1px solid rgba(200,146,42,0.1)' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(245,237,214,0.4)' }}>
+          <Link to="/" style={{ color: 'rgba(245,237,214,0.4)', textDecoration: 'none' }}>Accueil</Link>
+          <span>/</span>
+          <Link to="/gastronomie" style={{ color: 'rgba(245,237,214,0.4)', textDecoration: 'none' }}>Gastronomie</Link>
+          <span>/</span>
+          <span style={{ color: '#C8922A' }}>{resto.name}</span>
+        </div>
+      </div>
+      <MediaCarousel images={resto.gallery || []} videos={resto.videos || []} cover={resto.cover_image} name={resto.name} />
+
+      {/* Infos rapides sous le carrousel */}
+      <div style={{ background: '#0E0A06', borderBottom: '1px solid rgba(200,146,42,0.1)', padding: '14px 24px' }}>
+        <div style={{ maxWidth: 1024, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(1.2rem, 3vw, 1.8rem)', color: '#F5EDD6', fontWeight: 700, marginBottom: 4 }}>{resto.name}</h1>
+            <p style={{ fontSize: 13, color: 'rgba(245,237,214,0.5)' }}>
+              📍 {resto.city?.name}
+              {resto.cuisine_type && ` · ${resto.cuisine_type}`}
+              {` · ${priceIcons[resto.price_range]}`}
+              {` · ★ ${Number(resto.rating).toFixed(1)} (${resto.review_count} avis)`}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-8 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-5xl mx-auto px-4 md:px-8 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           {/* Bouton planificateur + réservation */}
           <div className="mb-6 flex flex-wrap gap-3">
@@ -87,20 +104,73 @@ export default function RestaurantDetail() {
         <div className="flex flex-col gap-4">
           <div className="bg-white border border-or/15 p-5">
             <h3 className="font-display font-bold text-lg text-nuit mb-4">Informations</h3>
-            {resto.phone && <p className="text-sm mb-2"><span className="text-brun-light">Tél.</span> <a href={`tel:${resto.phone}`} className="text-terracotta">{resto.phone}</a></p>}
-            {resto.opening_hours && (
-              <div className="text-sm">
-                <p className="text-brun-light mb-1">Horaires</p>
-                {Object.entries(resto.opening_hours).slice(0,3).map(([d,h]) => (
-                  <p key={d} className="text-nuit text-xs">{d} : {h}</p>
+            <div className="flex flex-col gap-0 text-sm divide-y divide-or/8">
+              {resto.city && (
+                <div className="flex justify-between py-2.5">
+                  <span className="text-brun-light">📍 Ville</span>
+                  <span className="font-semibold text-nuit">{resto.city.name}</span>
+                </div>
+              )}
+              {resto.phone && (
+                <div className="flex justify-between py-2.5">
+                  <span className="text-brun-light">📞 Téléphone</span>
+                  <a href={`tel:${resto.phone}`} className="font-semibold text-terracotta hover:underline">{resto.phone}</a>
+                </div>
+              )}
+              {resto.website && (
+                <div className="flex justify-between py-2.5">
+                  <span className="text-brun-light">🌐 Site web</span>
+                  <a href={resto.website} target="_blank" rel="noopener noreferrer" className="font-semibold text-terracotta hover:underline text-xs">Voir le site →</a>
+                </div>
+              )}
+              {resto.address && (
+                <div className="flex justify-between py-2.5 gap-4">
+                  <span className="text-brun-light flex-shrink-0">🏠 Adresse</span>
+                  <span className="font-semibold text-nuit text-right text-xs">{resto.address}</span>
+                </div>
+              )}
+              {Number(resto.rating) > 0 && (
+                <div className="flex justify-between py-2.5">
+                  <span className="text-brun-light">⭐ Note</span>
+                  <span className="font-semibold text-nuit">{Number(resto.rating).toFixed(1)}/5 <span className="text-brun-light font-normal">({resto.review_count})</span></span>
+                </div>
+              )}
+            </div>
+
+            {/* Horaires */}
+            {resto.opening_hours && Object.keys(resto.opening_hours).length > 0 && (
+              <div className="mt-4 pt-4 border-t border-or/10">
+                <p className="text-xs font-semibold text-brun uppercase tracking-wider mb-2">🕐 Horaires</p>
+                {Object.entries(resto.opening_hours).map(([d,h]) => (
+                  <div key={d} className="flex justify-between text-xs py-0.5">
+                    <span className="text-brun-light capitalize">{d}</span>
+                    <span className="text-nuit font-medium">{h}</span>
+                  </div>
                 ))}
               </div>
             )}
-            <div className="flex flex-wrap gap-2 mt-4 text-xs">
-              {resto.has_delivery    && <span className="bg-vert/10 text-vert px-2 py-0.5">🛵 Livraison</span>}
-              {resto.has_reservation && <span className="bg-or/10 text-or-dark px-2 py-0.5">📅 Réservation</span>}
-              {resto.has_wifi        && <span className="bg-blue-50 text-blue-600 px-2 py-0.5">📶 WiFi</span>}
-              {resto.has_parking     && <span className="bg-gray-100 text-gray-600 px-2 py-0.5">🅿️ Parking</span>}
+
+            {/* Services */}
+            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-or/10 text-xs">
+              {resto.has_delivery    && <span className="bg-vert/10 text-vert px-2 py-1">🛵 Livraison</span>}
+              {resto.has_reservation && <span className="bg-or/10 text-or-dark px-2 py-1">📅 Réservation</span>}
+              {resto.has_wifi        && <span className="bg-blue-50 text-blue-600 px-2 py-1">📶 WiFi</span>}
+              {resto.has_parking     && <span className="bg-gray-100 text-gray-600 px-2 py-1">🅿️ Parking</span>}
+            </div>
+
+            {/* Boutons */}
+            <div className="flex flex-col gap-2 mt-5">
+              {resto.phone && (
+                <a href={`tel:${resto.phone}`} className="w-full bg-nuit text-sable py-2.5 text-sm font-medium text-center hover:bg-brun transition-colors block">
+                  📞 Appeler
+                </a>
+              )}
+              {resto.latitude && resto.longitude && (
+                <a href={`https://www.google.com/maps?q=${resto.latitude},${resto.longitude}`} target="_blank" rel="noopener noreferrer"
+                  className="w-full border border-or/20 text-brun py-2.5 text-sm hover:border-or hover:text-or transition-colors text-center block">
+                  📍 Google Maps
+                </a>
+              )}
             </div>
           </div>
           <Link to="/gastronomie" className="text-center text-sm text-brun-light hover:text-terracotta transition-colors">← Autres restaurants</Link>

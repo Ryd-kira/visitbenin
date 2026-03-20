@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --watch src --ext js src/server.js",
+    "dev":   "nodemon --watch src --ext js src/server.js",
     "start": "node src/server.js",
     "build": "prisma generate",
     "migrate": "prisma migrate dev",
@@ -12,14 +12,14 @@
     "studio": "prisma studio",
     "generate": "prisma generate",
     "seed:planner": "node prisma/seed-planner.js",
-    "seed:events": "node prisma/seed-events.js",
+    "seed:events":  "node prisma/seed-events.js",
     "migrate:bookings": "psql $DATABASE_URL -f prisma/migrations/add_bookings.sql",
     "seed:marketplace": "node prisma/seed-marketplace.js",
     "migrate:marketplace": "psql $DATABASE_URL -f prisma/migrations/add_marketplace.sql",
     "migrate:fresh": "prisma migrate reset --force && node prisma/seed.js"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^5.10.0",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.0.0",
     "compression": "^1.7.4",
@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.0",
-    "prisma": "^5.22.0"
+    "prisma": "^5.10.0"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

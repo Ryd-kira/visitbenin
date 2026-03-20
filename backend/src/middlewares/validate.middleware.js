@@ -37,7 +37,7 @@ export const schemas = {
   // Place
   createPlace: Joi.object({
     name:          Joi.string().min(2).max(200).required(),
-    type:          Joi.string().valid('culture','nature','plage','safari','religieux','divertissement').required(),
+    type:          Joi.string().valid('culture','nature','plage','safari','religieux','divertissement','historique').required(),
     description:   Joi.string().min(10).required(),
     short_desc:    Joi.string().max(300).required(),
     city_id:       Joi.string().uuid().required(),
@@ -49,7 +49,12 @@ export const schemas = {
     website:       Joi.string().uri().allow('').optional(),
     phone:         Joi.string().max(20).allow('').optional(),
     is_unesco:     Joi.boolean().optional(),
+    is_featured:   Joi.boolean().optional(),
+    is_published:  Joi.boolean().optional(),
     tags:          Joi.array().items(Joi.string()).optional(),
+    cover_image:   Joi.string().uri().allow('').optional(),
+    gallery:       Joi.array().items(Joi.string().uri()).optional(),
+    videos:        Joi.array().items(Joi.string()).optional(),
   }),
 
   // Review

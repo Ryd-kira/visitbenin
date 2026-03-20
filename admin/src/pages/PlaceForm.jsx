@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { placesAPI } from '@/services/api'
 import { PageHeader, Input, Select, Textarea, Btn, Toggle } from '@/components/ui/index'
+import MediaUploader from '@/components/ui/MediaUploader'
 
 const TYPE_OPTS = [
   { value: 'culture',       label: 'Culture & Histoire' },
@@ -15,15 +16,21 @@ const TYPE_OPTS = [
 ]
 
 const CITY_OPTS = [
-  { value: '',            label: '— Choisir une ville —' },
-  { value: 'cotonou',     label: 'Cotonou' },
-  { value: 'porto-novo',  label: 'Porto-Novo' },
-  { value: 'ouidah',      label: 'Ouidah' },
-  { value: 'abomey',      label: 'Abomey' },
-  { value: 'grand-popo',  label: 'Grand-Popo' },
-  { value: 'natitingou',  label: 'Natitingou' },
-  { value: 'tanguieta',   label: 'Tanguiéta' },
+  { value: '', label: '— Choisir une ville —' },
+  { value: 'cotonou',       label: 'Cotonou' },
+  { value: 'porto-novo',    label: 'Porto-Novo' },
+  { value: 'ouidah',        label: 'Ouidah' },
+  { value: 'abomey',        label: 'Abomey' },
+  { value: 'grand-popo',    label: 'Grand-Popo' },
+  { value: 'natitingou',    label: 'Natitingou' },
+  { value: 'tanguieta',     label: 'Tanguiéta' },
   { value: 'abomey-calavi', label: 'Abomey-Calavi' },
+  { value: 'parakou',       label: 'Parakou' },
+  { value: 'kandi',         label: 'Kandi' },
+  { value: 'nikki',         label: 'Nikki' },
+  { value: 'djougou',       label: 'Djougou' },
+  { value: 'lokossa',       label: 'Lokossa' },
+  { value: 'pobe',          label: 'Pobè' },
 ]
 
 const EMPTY = {
@@ -31,7 +38,7 @@ const EMPTY = {
   city_id: '', address: '', latitude: '', longitude: '',
   entry_fee: '', website: '', phone: '', tags: '',
   is_featured: false, is_unesco: false, is_published: false,
-  cover_image: '',
+  cover_image: '', gallery: [], videos: [],
 }
 
 export default function PlaceForm() {
@@ -44,7 +51,6 @@ export default function PlaceForm() {
   const [errors, setErrors] = useState({})
   const [saved,  setSaved]  = useState(false)
 
-  // Charger le lieu existant si édition
   const { data: existing } = useQuery({
     queryKey: ['admin', 'place', id],
     queryFn: () => placesAPI.get(id),
@@ -54,22 +60,24 @@ export default function PlaceForm() {
   useEffect(() => {
     if (existing) {
       setForm({
-        name:        existing.name        || '',
-        type:        existing.type        || 'culture',
-        description: existing.description || '',
-        short_desc:  existing.short_desc  || '',
-        city_id:     existing.city_id     || '',
-        address:     existing.address     || '',
-        latitude:    existing.latitude    || '',
-        longitude:   existing.longitude   || '',
-        entry_fee:   existing.entry_fee   ?? '',
-        website:     existing.website     || '',
-        phone:       existing.phone       || '',
-        tags:        (existing.tags || []).join(', '),
-        is_featured: existing.is_featured || false,
-        is_unesco:   existing.is_unesco   || false,
-        is_published:existing.is_published|| false,
-        cover_image: existing.cover_image || '',
+        name:         existing.name         || '',
+        type:         existing.type         || 'culture',
+        description:  existing.description  || '',
+        short_desc:   existing.short_desc   || '',
+        city_id:      existing.city_id      || '',
+        address:      existing.address      || '',
+        latitude:     existing.latitude     || '',
+        longitude:    existing.longitude    || '',
+        entry_fee:    existing.entry_fee    ?? '',
+        website:      existing.website      || '',
+        phone:        existing.phone        || '',
+        tags:         (existing.tags || []).join(', '),
+        is_featured:  existing.is_featured  || false,
+        is_unesco:    existing.is_unesco    || false,
+        is_published: existing.is_published || false,
+        cover_image:  existing.cover_image  || '',
+        gallery:      existing.gallery      || [],
+        videos:       existing.videos       || [],
       })
     }
   }, [existing])
@@ -100,6 +108,8 @@ export default function PlaceForm() {
       longitude: Number(form.longitude),
       entry_fee: form.entry_fee !== '' ? Number(form.entry_fee) : null,
       tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      gallery: form.gallery,
+      videos:  form.videos,
     }
     mutation.mutate(payload)
   }
@@ -117,9 +127,7 @@ export default function PlaceForm() {
         subtitle={isEdit ? `ID: ${id}` : 'Créer une nouvelle destination'}
         actions={
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {saved && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--green)', letterSpacing: 1 }}>✓ SAUVEGARDÉ</span>
-            )}
+            {saved && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--green)', letterSpacing: 1 }}>✓ SAUVEGARDÉ</span>}
             <Btn variant="ghost" onClick={() => navigate('/places')}>Annuler</Btn>
             <Btn onClick={handleSubmit} disabled={mutation.isPending}>
               {mutation.isPending ? 'Sauvegarde...' : isEdit ? 'Mettre à jour' : 'Créer le lieu'}
@@ -173,13 +181,18 @@ export default function PlaceForm() {
             <Input label="Site web" type="url" value={form.website} onChange={e => set('website', e.target.value)} placeholder="https://..." />
           </div>
 
-          <SECTION title="Médias" />
+          <SECTION title="Photos & Vidéos" />
 
-          <div style={{ gridColumn: '1 / -1' }}>
-            <Input label="URL Image principale" value={form.cover_image} onChange={e => set('cover_image', e.target.value)} placeholder="https://images.unsplash.com/..." />
-            {form.cover_image && (
-              <img src={form.cover_image} alt="" style={{ marginTop: 8, height: 80, objectFit: 'cover', border: '1px solid var(--border)' }} onError={e => e.target.style.display='none'} />
-            )}
+          <div style={{ gridColumn: '1 / -1', background: '#111', border: '1px solid #222', padding: 16 }}>
+            <MediaUploader
+              label="Galerie médias"
+              images={form.gallery}
+              videos={form.videos}
+              coverImage={form.cover_image}
+              onImagesChange={urls => set('gallery', urls)}
+              onVideosChange={urls => set('videos', urls)}
+              onCoverChange={url => set('cover_image', url)}
+            />
           </div>
 
           <SECTION title="Tags & Options" />
@@ -192,12 +205,11 @@ export default function PlaceForm() {
             <Toggle checked={form.is_featured} onChange={v => set('is_featured', v)} label="Lieu mis en avant (Top)" />
             <Toggle checked={form.is_unesco}   onChange={v => set('is_unesco',   v)} label="Site UNESCO" />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
             <Toggle checked={form.is_published} onChange={v => set('is_published', v)} label="Publié (visible sur le site)" />
           </div>
         </div>
 
-        {/* Submit sticky */}
         <div style={{ position: 'sticky', bottom: 0, background: 'var(--bg)', borderTop: '1px solid var(--border)', padding: '12px 0', marginTop: 32, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <Btn variant="ghost" onClick={() => navigate('/places')} type="button">Annuler</Btn>
           <Btn type="submit" disabled={mutation.isPending} size="lg">

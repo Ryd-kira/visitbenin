@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { restaurantsAPI } from '@/services/api'
+import MediaUploader from '@/components/ui/MediaUploader'
 import { PageHeader, Input, Select, Textarea, Btn, Toggle } from '@/components/ui/index'
 
 const CITY_OPTS = [
@@ -21,7 +22,7 @@ const PRICE_OPTS = [
 const EMPTY = {
   name: '', cuisine_type: '', price_range: 'medium', description: '',
   short_desc: '', city_id: '', address: '', latitude: '', longitude: '',
-  phone: '', website: '', cover_image: '',
+  phone: '', website: '', cover_image: '', gallery: [], videos: [],
   has_delivery: false, has_reservation: false, has_wifi: false, has_parking: false, has_ac: false,
   is_published: false, is_featured: false,
 }
@@ -68,7 +69,17 @@ export default function RestaurantForm() {
         <Input label="Longitude" type="number" step="0.0001" value={form.longitude} onChange={e => set('longitude', e.target.value)} />
         <Input label="Téléphone" value={form.phone} onChange={e => set('phone', e.target.value)} />
         <Input label="Site web" type="url" value={form.website} onChange={e => set('website', e.target.value)} />
-        <div style={{ gridColumn: '1/-1' }}><Input label="Image principale (URL)" value={form.cover_image} onChange={e => set('cover_image', e.target.value)} /></div>
+        <div style={{ gridColumn: '1/-1', background: '#111', border: '1px solid #222', padding: 16 }}>
+            <MediaUploader
+              label="Photos & Vidéos"
+              images={form.gallery}
+              videos={form.videos}
+              coverImage={form.cover_image}
+              onImagesChange={urls => set('gallery', urls)}
+              onVideosChange={urls => set('videos', urls)}
+              onCoverChange={url => set('cover_image', url)}
+            />
+          </div>
 
         <div style={{ gridColumn: '1/-1', borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--amber)', letterSpacing: 3 }}>OPTIONS & SERVICES</span>

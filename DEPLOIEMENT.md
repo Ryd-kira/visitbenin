@@ -1,150 +1,130 @@
 # 🚀 Guide de Déploiement — VisitBénin
 
-> **Stack** : Frontend → Vercel | Backend → Koyeb | BDD → Neon
+> Stack : Frontend/Admin → Vercel | Backend → Render | BDD → Neon
 
 ---
 
-## Vue d'ensemble
+## Architecture
 
 ```
-┌─────────────────┐      HTTPS       ┌──────────────────────┐
-│   Vercel         │ ─────────────► │   Koyeb               │
-│  (frontend)      │                 │   (API Node.js)       │
-│  visitbenin.app  │                 │   api.visitbenin.app  │
-└─────────────────┘                 └──────────┬───────────┘
-                                               │ SSL/Prisma
-                                    ┌──────────▼───────────┐
-                                    │   Neon (PostgreSQL)   │
-                                    │   bdd.neon.tech       │
-                                    └──────────────────────┘
+Vercel (frontend)  ──HTTPS──►  Render (API Node.js)  ──►  Neon (PostgreSQL)
+visitbenin.vercel.app          visitbenin-api.onrender.com
 ```
 
 ---
 
-## ÉTAPE 1 — Base de données sur Neon
+## ÉTAPE 1 — GitHub (prérequis)
 
-### 1.1 Créer le projet Neon
-1. Aller sur **https://neon.tech** → Sign up (gratuit)
-2. **New Project** → Nom : `visitbenin` → Region : `EU Frankfurt`
-3. Copier les deux URLs affichées :
-
-```
-Connection string (pooled) :
-postgresql://visitbenin:<password>@ep-xxx-pooler.eu-central-1.aws.neon.tech/visitbenin_db?sslmode=require
-
-Direct connection :
-postgresql://visitbenin:<password>@ep-xxx.eu-central-1.aws.neon.tech/visitbenin_db?sslmode=require
-```
-
-### 1.2 Appliquer le schéma Prisma (depuis votre machine locale)
+### Pousser le projet
 
 ```bash
-cd ~/Téléchargements/visitbenin/backend
+cd ~/Téléchargements/visitbenin
 
-# Créer un .env.local temporaire avec les URLs Neon
-cat > .env.neon << 'EOF'
-DATABASE_URL="postgresql://visitbenin:<password>@ep-xxx-pooler.eu-central-1.aws.neon.tech/visitbenin_db?sslmode=require"
-DIRECT_URL="postgresql://visitbenin:<password>@ep-xxx.eu-central-1.aws.neon.tech/visitbenin_db?sslmode=require"
-EOF
-
-# Appliquer les migrations
-npx dotenv -e .env.neon -- npx prisma migrate deploy
-
-# OU si première fois (pas de dossier migrations/) :
-npx dotenv -e .env.neon -- npx prisma db push
-
-# Peupler avec les données de démo
-npx dotenv -e .env.neon -- node prisma/seed.js
-npx dotenv -e .env.neon -- node prisma/seed-events.js
-npx dotenv -e .env.neon -- node prisma/seed-marketplace.js
-
-# Nettoyer le fichier temporaire
-rm .env.neon
+git init
+git add .
+git commit -m "VisitBénin v1.0"
+git branch -M main
 ```
 
-> **Note** : Si `npx dotenv` n'est pas disponible → `npm i -g dotenv-cli` puis retenter
+Créer le repo sur github.com, puis :
 
----
-
-## ÉTAPE 2 — Backend sur Koyeb
-
-### 2.1 Préparer le dépôt GitHub
-
-Le backend doit être dans un dépôt GitHub (séparé ou monorepo).
-
-**Option A — Monorepo (recommandé)** : pousser le dossier `visitbenin/` entier.
-
-**Option B — Repo backend seul** :
 ```bash
-cd ~/Téléchargements/visitbenin/backend
-git init && git add . && git commit -m "init"
-git remote add origin https://github.com/TON_USERNAME/visitbenin-api.git
+# Avec token (Settings → Developer settings → Personal access tokens → Tokens classic → repo)
+git remote add origin https://VOTRE_USERNAME:VOTRE_TOKEN@github.com/VOTRE_USERNAME/visitbenin.git
 git push -u origin main
 ```
 
-### 2.2 Déployer sur Koyeb
+---
 
-1. Aller sur **https://www.koyeb.com** → Sign up (gratuit — 1 instance nano incluse)
-2. **Create App** → **GitHub** → Sélectionner votre repo
+## ÉTAPE 2 — Neon (base de données)
 
-**Configuration du service** :
+1. https://neon.tech → Sign up → **New Project**
+   - Name : `visitbenin`
+   - Database : `visitbenin_db`
+   - Region : `EU Frankfurt`
 
-| Champ | Valeur |
-|---|---|
-| Service name | `visitbenin-api` |
-| Branch | `main` |
-| Build command | `cd backend && npm ci && npm run build` |
-| Run command | `cd backend && npx prisma migrate deploy && npm start` |
-| Port | `3001` |
-| Instance | `Nano (free)` |
-| Region | `Frankfurt` |
+2. Dashboard Neon → **Connection Details** → sélectionner **Prisma** dans le menu déroulant
 
-> Si repo backend seul (pas monorepo), enlever le `cd backend &&`
+3. Copier les deux URLs affichées
 
-### 2.3 Variables d'environnement Koyeb
+4. Appliquer le schéma depuis votre machine :
 
-Dans **Settings → Environment Variables**, ajouter :
-
-```
-NODE_ENV              = production
-DATABASE_URL          = postgresql://visitbenin:<pw>@ep-xxx-pooler.neon.tech/visitbenin_db?sslmode=require
-DIRECT_URL            = postgresql://visitbenin:<pw>@ep-xxx.neon.tech/visitbenin_db?sslmode=require
-JWT_ACCESS_SECRET     = [générer : openssl rand -base64 64]
-JWT_REFRESH_SECRET    = [générer : openssl rand -base64 64]
-FRONTEND_URL          = https://visitbenin.vercel.app        ← à remplir après étape 3
-ADMIN_URL             = https://visitbenin-admin.vercel.app  ← à remplir après étape 3
-ANTHROPIC_API_KEY     = sk-ant-...                           ← optionnel, pour le chatbot
-```
-
-**Générer des secrets forts** (dans votre terminal) :
 ```bash
-openssl rand -base64 64   # copier-coller pour JWT_ACCESS_SECRET
-openssl rand -base64 64   # copier-coller pour JWT_REFRESH_SECRET
+cd ~/Téléchargements/visitbenin/backend
+
+# Créer le .env temporaire avec vos vraies URLs Neon
+cat > .env << 'ENVEOF'
+DATABASE_URL="postgresql://user:password@host-pooler.neon.tech/visitbenin_db?sslmode=require"
+DIRECT_URL="postgresql://user:password@host.neon.tech/visitbenin_db?sslmode=require"
+ENVEOF
+
+# Appliquer le schéma
+npx prisma@5 db push
+
+# Charger les données
+node prisma/seed.js
+node prisma/seed-events.js
+node prisma/seed-marketplace.js
+
+# Supprimer le .env (sera recréé proprement après)
+rm .env
 ```
-
-### 2.4 Vérifier le déploiement
-
-Une fois déployé, Koyeb vous donne une URL type :
-`https://visitbenin-api-xxxx.koyeb.app`
-
-Tester :
-```bash
-curl https://visitbenin-api-xxxx.koyeb.app/health
-# Réponse attendue : {"status":"ok","timestamp":"..."}
-```
-
-Noter cette URL — elle sera `VITE_API_URL` pour Vercel.
 
 ---
 
-## ÉTAPE 3 — Frontend sur Vercel
+## ÉTAPE 3 — Render (backend)
 
-### 3.1 Déployer le frontend
+1. https://render.com → Sign up avec GitHub
 
-1. Aller sur **https://vercel.com** → Sign up avec GitHub
-2. **Add New Project** → Importer votre repo GitHub
+2. **New** → **Web Service** → Connecter votre repo GitHub `visitbenin`
 
-**Configuration build** :
+3. Configuration :
+
+| Champ | Valeur |
+|---|---|
+| Name | `visitbenin-api` |
+| Root Directory | `backend` |
+| Runtime | `Node` |
+| Branch | `main` |
+| Build Command | `npm install && npm run build` |
+| Start Command | `npx prisma@5 migrate deploy && npm start` |
+| Instance Type | `Free` |
+| Region | `Frankfurt (EU Central)` |
+
+4. Variables d'environnement (cliquer **Add Environment Variable** pour chacune) :
+
+| Clé | Valeur |
+|---|---|
+| `NODE_ENV` | `production` |
+| `NODE_VERSION` | `20.11.0` |
+| `DATABASE_URL` | URL pooler Neon |
+| `DIRECT_URL` | URL directe Neon |
+| `JWT_ACCESS_SECRET` | `openssl rand -base64 64` |
+| `JWT_REFRESH_SECRET` | `openssl rand -base64 64` |
+| `JWT_ACCESS_EXPIRES` | `15m` |
+| `JWT_REFRESH_EXPIRES` | `7d` |
+| `FRONTEND_URL` | `https://visitbenin.vercel.app` (à corriger après Vercel) |
+| `ADMIN_URL` | `https://visitbenin-admin.vercel.app` (à corriger après Vercel) |
+| `ANTHROPIC_API_KEY` | Votre clé Claude (optionnel) |
+
+5. Cliquer **Create Web Service** → attendre le déploiement (~3 min)
+
+6. Tester :
+```bash
+curl https://visitbenin-api.onrender.com/health
+# {"status":"ok"}
+```
+
+> ⚠️ Sur le plan gratuit Render, le service s'endort après 15 min d'inactivité.
+> Le premier appel après inactivité prend ~30 secondes (cold start).
+
+---
+
+## ÉTAPE 4 — Vercel (frontend)
+
+1. https://vercel.com → Sign up avec GitHub → **Add New Project** → importer `visitbenin`
+
+2. Configuration :
 
 | Champ | Valeur |
 |---|---|
@@ -152,116 +132,76 @@ Noter cette URL — elle sera `VITE_API_URL` pour Vercel.
 | Root Directory | `frontend` |
 | Build Command | `npm run build` |
 | Output Directory | `dist` |
-| Install Command | `npm install` |
 
-### 3.2 Variables d'environnement Vercel (frontend)
-
-Dans **Settings → Environment Variables** :
-
+3. Variable d'environnement :
 ```
-VITE_API_URL = https://visitbenin-api-xxxx.koyeb.app/api/v1
+VITE_API_URL = https://visitbenin-api.onrender.com/api/v1
 ```
 
-> Remplacer `xxxx` par votre vraie URL Koyeb
-
-### 3.3 Domaine personnalisé (optionnel)
-
-**Settings → Domains** → Ajouter `visitbenin.bj` ou `visitbenin.vercel.app`
+4. Cliquer **Deploy**
 
 ---
 
-## ÉTAPE 4 — Admin sur Vercel
+## ÉTAPE 5 — Vercel (admin)
 
-Même procédure que le frontend, avec :
+Même procédure, avec :
 
 | Champ | Valeur |
 |---|---|
 | Root Directory | `admin` |
-| Build Command | `npm run build` |
-| Output Directory | `dist` |
 
 Variable d'environnement :
 ```
-VITE_API_URL = https://visitbenin-api-xxxx.koyeb.app/api/v1
+VITE_API_URL = https://visitbenin-api.onrender.com/api/v1
 ```
 
 ---
 
-## ÉTAPE 5 — Mettre à jour le CORS
+## ÉTAPE 6 — Mettre à jour le CORS sur Render
 
-Une fois les URLs Vercel connues, retourner dans Koyeb → Variables d'environnement et mettre à jour :
+Une fois les URLs Vercel connues, dans Render → **Environment** → mettre à jour :
 
 ```
-FRONTEND_URL = https://visitbenin.vercel.app
-ADMIN_URL    = https://visitbenin-admin.vercel.app
+FRONTEND_URL = https://visitbenin-xxx.vercel.app
+ADMIN_URL    = https://visitbenin-admin-xxx.vercel.app
 ```
 
-Koyeb redéployera automatiquement.
+Render redéploie automatiquement.
 
 ---
 
-## Checklist finale ✅
+## Checklist
 
 ```
-□ Neon : base de données créée et migrée
-□ Neon : données de seed chargées (seed.js + seed-events.js + seed-marketplace.js)
-□ Koyeb : backend déployé et /health accessible
-□ Koyeb : toutes les variables d'environnement renseignées
-□ Vercel frontend : VITE_API_URL pointe vers Koyeb
-□ Vercel admin : VITE_API_URL pointe vers Koyeb
-□ Koyeb : FRONTEND_URL et ADMIN_URL mis à jour avec les URLs Vercel
-□ Test : login avec superadmin@visitbenin.bj / Pendjari$2025!
-□ Test : créer un voyage dans le planificateur
-□ Test : chatbot Akofa répond
+□ GitHub : projet poussé sur main
+□ Neon : BDD créée et schéma appliqué (prisma db push)
+□ Neon : seeds chargés (seed.js + seed-events.js + seed-marketplace.js)
+□ Render : service déployé, /health répond {"status":"ok"}
+□ Render : toutes les variables d'env renseignées
+□ Vercel frontend : VITE_API_URL = URL Render
+□ Vercel admin : VITE_API_URL = URL Render
+□ Render : FRONTEND_URL et ADMIN_URL mis à jour
+□ Test login : superadmin@visitbenin.bj / Pendjari$2025!
+□ Test carte interactive
+□ Test chatbot Akofa
 ```
 
 ---
 
-## Résolution des problèmes courants
+## Erreurs fréquentes
 
-### ❌ "CORS blocked"
-→ Vérifier que `FRONTEND_URL` dans Koyeb correspond **exactement** à l'URL Vercel (sans slash final)
+### CORS bloqué
+→ FRONTEND_URL dans Render ne correspond pas exactement à l'URL Vercel (sans slash final)
 
-### ❌ "Invalid refresh token" après login
-→ Les cookies `SameSite=None` nécessitent **HTTPS**. S'assurer que les deux domaines sont en HTTPS (c'est automatique avec Vercel + Koyeb)
+### Déconnexion après refresh
+→ Vérifier NODE_ENV=production dans Render
 
-### ❌ Prisma "Environment variable not found: DIRECT_URL"
-→ Ajouter `DIRECT_URL` dans les variables Koyeb (même valeur que `DATABASE_URL` mais sans `-pooler`)
+### P1001 : Can't reach database
+→ Essayer avec uniquement l'URL pooler pour DATABASE_URL et DIRECT_URL
 
-### ❌ "Cannot connect to database" au démarrage Koyeb
-→ Vérifier que l'URL Neon contient bien `?sslmode=require`
+### Page blanche sur Vercel
+→ Vérifier que frontend/vercel.json existe avec les rewrites SPA
 
-### ❌ Page blanche sur Vercel (routes React)
-→ Le fichier `vercel.json` doit être présent dans `frontend/` avec les rewrites SPA (déjà configuré)
-
----
-
-## Architecture des coûts (plan gratuit)
-
-| Service | Plan | Limites |
-|---|---|---|
-| **Neon** | Free | 0.5 GB stockage, 1 compute unit |
-| **Koyeb** | Free | 1 instance nano, 256 MB RAM, 0.1 vCPU |
-| **Vercel** | Hobby | 100 GB bandwidth, deployments illimités |
-| **Total** | **0 €/mois** | Suffisant pour un MVP |
-
-> Pour la production avec du trafic réel : Neon Launch (~19$/mois), Koyeb Starter (~5$/mois)
-
----
-
-## Commandes utiles post-déploiement
-
-```bash
-# Voir les logs Koyeb en temps réel
-koyeb service logs visitbenin-api --follow
-
-# Ouvrir Prisma Studio sur la BDD Neon (depuis local)
-DATABASE_URL="<neon_url>" npx prisma studio
-
-# Relancer un déploiement Koyeb
-koyeb service redeploy visitbenin-api
-
-# Vérifier le statut de toutes les instances
-koyeb service list
-```
-
+### Cold start lent (30s)
+→ Normal sur plan gratuit Render. Solution : passer au plan Starter (7$/mois)
+   ou utiliser un service de ping toutes les 14 min (ex: UptimeRobot gratuit)

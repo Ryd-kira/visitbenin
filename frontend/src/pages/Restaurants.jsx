@@ -29,13 +29,13 @@ export default function Restaurants() {
 
   return (
     <div className="min-h-screen bg-sable-light">
-      <div className="bg-nuit py-14 px-8">
+      <div className="bg-nuit py-10 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
           <p className="text-or text-xs uppercase tracking-[0.3em] mb-3">{t('restaurants.subtitle')}</p>
           <h1 className="font-display font-bold text-5xl text-sable">
             {t('restaurants.title')}<br /><em className="text-or">béninoise</em>
           </h1>
-          <p className="text-sable/50 mt-3 max-w-lg">Maquis locaux, restaurants gastronomiques, bars de plage — 320 adresses sélectionnées.</p>
+          <p className="text-sable/50 mt-3 max-w-lg">Maquis locaux, restaurants gastronomiques, bars de plage — les meilleures adresses du Bénin sélectionnées.</p>
           <div className="flex mt-5 max-w-md">
             <input
               type="text" placeholder={t('restaurants.search_placeholder')}
@@ -47,7 +47,7 @@ export default function Restaurants() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         <div className="flex gap-2 mb-8 overflow-x-auto pb-1">
           {PRICE_FILTERS.map(f => (
             <button key={f.value} onClick={() => { setPrice(f.value); setPage(1) }}

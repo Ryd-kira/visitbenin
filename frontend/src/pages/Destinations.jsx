@@ -73,14 +73,14 @@ export default function Destinations() {
     <div className="min-h-screen bg-sable-light">
 
       {/* ── HEADER PAGE ── */}
-      <div className="bg-nuit py-14 px-8">
+      <div className="bg-nuit py-10 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
           <p className="text-or text-xs uppercase tracking-[0.3em] mb-3">Bénin · Découverte</p>
-          <h1 className="font-display font-bold text-5xl text-sable">
+          <h1 className="font-display font-bold text-4xl md:text-5xl text-sable">
             Destinations &<br /><em className="text-or">Sites à visiter</em>
           </h1>
-          <p className="text-sable/50 mt-4 max-w-xl leading-relaxed">
-            Sites UNESCO, parcs naturels, plages et lieux sacrés — explorez les 87 sites incontournables du Bénin.
+          <p className="text-sable/50 mt-4 max-w-xl leading-relaxed text-sm md:text-base">
+            Sites UNESCO, parcs naturels, plages et lieux sacrés — découvrez les merveilles du Bénin.
           </p>
 
           {/* Barre de recherche */}
@@ -99,7 +99,7 @@ export default function Destinations() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
 
         {/* ── FILTRES ── */}
         <div className="flex flex-col gap-4 mb-8">

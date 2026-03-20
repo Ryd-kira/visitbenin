@@ -87,6 +87,35 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', env: process.env.NODE_ENV, ts: new Date() })
 })
 
+// Stats globales pour la homepage
+app.get('/api/v1/stats/summary', async (req, res) => {
+  try {
+    const { prisma } = await import('./utils/prisma.js')
+    const [places, restaurants, schools, events] = await Promise.all([
+      prisma.place.count({ where: { is_published: true } }),
+      prisma.restaurant.count({ where: { is_published: true } }),
+      prisma.school.count({ where: { is_published: true } }),
+      prisma.event.count({ where: { is_published: true } }),
+    ])
+    // Compter par type de site
+    const placesByType = await prisma.place.groupBy({
+      by: ['type'], where: { is_published: true }, _count: { id: true }
+    })
+    const byType = Object.fromEntries(placesByType.map(p => [p.type, p._count.id]))
+    res.json({
+      places, restaurants, schools, events,
+      culture: byType.culture || 0,
+      nature:  byType.nature  || 0,
+      plage:   byType.plage   || 0,
+      safari:  byType.safari  || 0,
+      resto:   restaurants,
+      ecole:   schools,
+    })
+  } catch (err) {
+    res.json({ places: 0, restaurants: 0, schools: 0, events: 0 })
+  }
+})
+
 app.use((req, res) => {
   res.status(404).json({ error: 'Route ' + req.method + ' ' + req.path + ' introuvable' })
 })

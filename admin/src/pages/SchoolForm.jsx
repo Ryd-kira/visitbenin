@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { schoolsAPI } from '@/services/api'
 import { PageHeader, Input, Select, Textarea, Btn, Toggle } from '@/components/ui/index'
+import MediaUploader from '@/components/ui/MediaUploader'
 
 const CITY_OPTS = [
   { value: '', label: '— Ville —' },
@@ -30,7 +31,7 @@ export default function SchoolForm() {
     name: '', school_type: 'lycee', program: 'francais', description: '',
     short_desc: '', city_id: '', address: '', latitude: '', longitude: '',
     fees_range_min: '', fees_range_max: '', bac_rate: '', student_count: '',
-    founded_year: '', phone: '', email: '', website: '', cover_image: '',
+    founded_year: '', phone: '', email: '', website: '', cover_image: '', gallery: [], videos: [],
     is_aefe: false, accepts_international: true, is_published: false, is_featured: false,
   })
   const [saved, setSaved] = useState(false)
@@ -86,7 +87,17 @@ export default function SchoolForm() {
         <Input label="Téléphone" value={form.phone} onChange={e => set('phone', e.target.value)} />
         <Input label="Email" type="email" value={form.email} onChange={e => set('email', e.target.value)} />
         <div style={{ gridColumn: '1/-1' }}><Input label="Site web" type="url" value={form.website} onChange={e => set('website', e.target.value)} /></div>
-        <div style={{ gridColumn: '1/-1' }}><Input label="Image (URL)" value={form.cover_image} onChange={e => set('cover_image', e.target.value)} /></div>
+        <div style={{ gridColumn: '1/-1', background: '#111', border: '1px solid #222', padding: 16 }}>
+            <MediaUploader
+              label="Photos & Vidéos"
+              images={form.gallery}
+              videos={form.videos}
+              coverImage={form.cover_image}
+              onImagesChange={urls => set('gallery', urls)}
+              onVideosChange={urls => set('videos', urls)}
+              onCoverChange={url => set('cover_image', url)}
+            />
+          </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <Toggle checked={form.is_aefe}               onChange={v => set('is_aefe', v)}               label="Affilié AEFE" />
           <Toggle checked={form.accepts_international} onChange={v => set('accepts_international', v)} label="Accepte étrangers" />

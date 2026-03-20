@@ -178,6 +178,7 @@ model Place {
   longitude     Decimal     @db.Decimal(10, 7)
   cover_image   String?
   gallery       String[]    @default([])
+  videos        String[]    @default([])
   entry_fee     Int?
   opening_hours Json?
   website       String?
@@ -219,6 +220,7 @@ model Restaurant {
   longitude     Decimal?   @db.Decimal(10, 7)
   cover_image   String?
   gallery       String[]   @default([])
+  videos        String[]   @default([])
   cuisine_type  String?                      // ancien champ — conservé pour compatibilité
   cuisine_types String[]   @default([])
   has_reservation Boolean  @default(false)   // ancien champ — conservé pour compatibilité
@@ -266,7 +268,8 @@ model School {
   longitude            Decimal?      @db.Decimal(10, 7)
   cover_image          String?
   logo                 String?
-  gallery              String[]  @default([])    // ancien champ — conservé pour compatibilité
+  gallery              String[]  @default([])
+  videos               String[]  @default([])
   website              String?
   phone                String?
   email                String?
@@ -310,6 +313,8 @@ model Hotel {
   latitude      Decimal?   @db.Decimal(10, 7)
   longitude     Decimal?   @db.Decimal(10, 7)
   cover_image   String?
+  gallery       String[]   @default([])
+  videos        String[]   @default([])
   stars         Int        @default(3)
   price_range   PriceRange @default(medium)
   website       String?

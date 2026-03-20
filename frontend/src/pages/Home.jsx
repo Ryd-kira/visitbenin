@@ -5,28 +5,31 @@ import { useTranslation } from 'react-i18next'
 import { useFeaturedPlaces } from '@/hooks/index'
 import PlaceCard from '@/components/ui/PlaceCard'
 import PageLoader from '@/components/ui/PageLoader'
+import axios from '@/services/api.js'
+import { useQuery } from '@tanstack/react-query'
 
+// Photos authentiques du Bénin (Wikimedia Commons / domaine public)
 const HERO_SLIDES = [
-  { img: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=1600&q=90', label: 'Ganvié · La Venise Africaine', city: 'Lac Nokoué' },
-  { img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600&q=90', label: 'Parc de la Pendjari', city: 'Atacora' },
-  { img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1600&q=90', label: 'Plage de Grand-Popo', city: 'Mono' },
-  { img: 'https://images.unsplash.com/photo-1580619305218-8423a7ef79b4?w=1600&q=90', label: "Palais d'Abomey", city: 'Zou' },
+  { img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Ganvie_stilt_village%2C_Benin.jpg/1280px-Ganvie_stilt_village%2C_Benin.jpg', label: 'Ganvié · La Venise Africaine', city: 'Lac Nokoué' },
+  { img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Porte_du_non_retour_ouidah.jpg/1280px-Porte_du_non_retour_ouidah.jpg', label: 'Porte du Non-Retour', city: 'Ouidah' },
+  { img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Pendjari_Hippo.jpg/1280px-Pendjari_Hippo.jpg', label: 'Parc National de la Pendjari', city: 'Atacora' },
+  { img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Palais_royal_abomey.jpg/1280px-Palais_royal_abomey.jpg', label: "Palais Royaux d'Abomey · UNESCO", city: 'Zou' },
 ]
 
 const STATS = [
-  { num: '3',   label: 'Sites UNESCO', icon: '🏛️' },
-  { num: '12',  label: 'Départements', icon: '🗺️' },
-  { num: '28°', label: 'Temp. moy.', icon: '☀️' },
-  { num: '97%', label: 'Francophones', icon: '🇧🇯' },
+  { num: '3',   label: 'Sites UNESCO',  icon: '🏛️' },
+  { num: '12',  label: 'Départements',  icon: '🗺️' },
+  { num: '28°', label: 'Temp. moy.',    icon: '☀️' },
+  { num: '97%', label: 'Francophones',  icon: '🇧🇯' },
 ]
 
 const CATEGORIES = [
-  { label: 'Culture & Histoire', icon: '🏛️', type: 'culture',  count: 87,  color: 'from-terracotta/80', img: 'https://images.unsplash.com/photo-1580619305218-8423a7ef79b4?w=600&q=80' },
-  { label: 'Nature & Safaris',   icon: '🌿', type: 'nature',   count: 45,  color: 'from-vert/80',       img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80' },
-  { label: 'Plages',             icon: '🏖️', type: 'plage',    count: 18,  color: 'from-blue-600/80',   img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80' },
-  { label: 'Gastronomie',        icon: '🍽️', type: 'resto',    count: 320, color: 'from-or/80',         img: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80' },
-  { label: 'Écoles',             icon: '🎓', type: 'ecole',    count: 152, color: 'from-blue-800/80',   img: 'https://images.unsplash.com/photo-1497486751825-1233686d5d80?w=600&q=80' },
-  { label: 'S\'installer',       icon: '🏠', type: 'guide',    count: null, color: 'from-brun/80',      img: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80' },
+  { label: 'Culture & Histoire', icon: '🏛️', type: 'culture', color: 'from-terracotta/80', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Palais_royal_abomey.jpg/800px-Palais_royal_abomey.jpg', route: '/destinations?type=culture' },
+  { label: 'Nature & Safaris',   icon: '🌿', type: 'nature',  color: 'from-vert/80',       img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Pendjari_Hippo.jpg/800px-Pendjari_Hippo.jpg',         route: '/destinations?type=nature' },
+  { label: 'Plages',             icon: '🏖️', type: 'plage',   color: 'from-blue-600/80',   img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Grand-Popo_beach.jpg/800px-Grand-Popo_beach.jpg',      route: '/destinations?type=plage' },
+  { label: 'Gastronomie',        icon: '🍽️', type: 'resto',   color: 'from-or/80',         img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Benin_food_sauce.jpg/800px-Benin_food_sauce.jpg',      route: '/gastronomie' },
+  { label: 'Écoles',             icon: '🎓', type: 'ecole',   color: 'from-blue-800/80',   img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/University_of_Abomey-Calavi.jpg/800px-University_of_Abomey-Calavi.jpg', route: '/ecoles' },
+  { label: "S'installer",        icon: '🏠', type: 'guide',   color: 'from-brun/80',       img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Cotonou_aerial.jpg/800px-Cotonou_aerial.jpg', route: '/sinstaller' },
 ]
 
 const CAT_ROUTES = {
@@ -57,6 +60,13 @@ export default function Home() {
   const { t } = useTranslation()
   const [slide, setSlide] = useState(0)
   const { data: featured, isLoading } = useFeaturedPlaces()
+
+  // Stats dynamiques depuis l'API
+  const { data: statsData } = useQuery({
+    queryKey: ['home-stats'],
+    queryFn: () => axios.get('/stats/summary').then(r => r.data).catch(() => null),
+    staleTime: 10 * 60 * 1000,
+  })
 
   // Auto-slide hero
   useEffect(() => {
@@ -171,7 +181,7 @@ export default function Home() {
           {CATEGORIES.map((cat, i) => (
             <Link
               key={i}
-              to={CAT_ROUTES[cat.type]}
+              to={cat.route || CAT_ROUTES[cat.type]}
               className="group relative overflow-hidden h-44 block"
               style={{ transitionDelay: `${i * 60}ms` }}
             >
@@ -184,7 +194,9 @@ export default function Home() {
               <div className="absolute inset-0 p-5 flex flex-col justify-end">
                 <div className="text-2xl mb-1">{cat.icon}</div>
                 <h3 className="text-white font-display font-bold text-lg leading-tight">{cat.label}</h3>
-                {cat.count && <p className="text-white/60 text-xs mt-0.5">{cat.count} {cat.type === 'ecole' ? 'établissements' : 'adresses'}</p>}
+                {statsData?.[cat.type] && (
+                  <p className="text-white/60 text-xs mt-0.5">{statsData[cat.type]} {cat.type === 'ecole' ? 'établissements' : 'adresses'}</p>
+                )}
               </div>
               <div className="absolute inset-0 border-2 border-transparent group-hover:border-or/50 transition-colors pointer-events-none" />
             </Link>
@@ -237,7 +249,7 @@ export default function Home() {
       >
         <div className="relative overflow-hidden min-h-64">
           <img
-            src="https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?w=900&q=85"
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Porte_du_non_retour_ouidah.jpg/900px-Porte_du_non_retour_ouidah.jpg"
             alt="Ouidah"
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -394,7 +406,7 @@ function FeaturedCard({ place }) {
     >
       <div className="relative h-52 overflow-hidden">
         <img
-          src={place.cover_image || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=600'}
+          src={place.cover_image || 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Ganvie_stilt_village%2C_Benin.jpg/800px-Ganvie_stilt_village%2C_Benin.jpg'}
           alt={place.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 brightness-90"
         />

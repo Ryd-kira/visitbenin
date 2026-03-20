@@ -30,7 +30,7 @@ export default function PlaceCard({ item, type = 'place', variant = 'grid' }) {
     <Link to={route} className="group block bg-white border border-or/10 hover:border-or/30 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
       <div className="relative overflow-hidden h-48">
         <img
-          src={item.cover_image || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=600'}
+          src={item.cover_image || 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Ganvie_stilt_village%2C_Benin.jpg/800px-Ganvie_stilt_village%2C_Benin.jpg'}
           alt={item.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />

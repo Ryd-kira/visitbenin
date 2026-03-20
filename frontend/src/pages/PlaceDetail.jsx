@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/useAuthStore'
 import PageLoader from '@/components/ui/PageLoader'
 import AddToPlannerBtn from '@/components/ui/AddToPlannerBtn'
 import BookingModal from '@/components/ui/BookingModal'
+import MediaCarousel from '@/components/ui/MediaCarousel'
 
 const TYPE_LABELS = {
   culture: 'Culture & Histoire', nature: 'Nature',
@@ -29,8 +30,18 @@ export default function PlaceDetail() {
 
   return (
     <div className="bg-sable-light min-h-screen">
-      <Hero place={place} />
-      <div className="max-w-7xl mx-auto px-8 py-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      {/* Breadcrumb */}
+      <div style={{ background: '#0E0A06', padding: '10px 24px', borderBottom: '1px solid rgba(200,146,42,0.1)' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(245,237,214,0.4)' }}>
+          <Link to="/" style={{ color: 'rgba(245,237,214,0.4)', textDecoration: 'none' }}>Accueil</Link>
+          <span>/</span>
+          <Link to="/destinations" style={{ color: 'rgba(245,237,214,0.4)', textDecoration: 'none' }}>Destinations</Link>
+          <span>/</span>
+          <span style={{ color: '#C8922A' }}>{place.name}</span>
+        </div>
+      </div>
+      <MediaCarousel images={place.gallery || []} videos={place.videos || []} cover={place.cover_image} name={place.name} />
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 flex flex-col gap-10">
           <Description place={place} />
           <Reviews place={place} />
@@ -52,7 +63,7 @@ function Hero({ place }) {
       {/* Image principale */}
       <div className="relative h-[60vh] overflow-hidden">
         <img
-          src={images[0] || 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=1600'}
+          src={images[0] || 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Ganvie_stilt_village%2C_Benin.jpg/1280px-Ganvie_stilt_village%2C_Benin.jpg'}
           alt={place.name}
           className="w-full h-full object-cover brightness-75"
           style={{ animation: 'slowZoom 10s ease-in-out infinite alternate' }}
@@ -349,59 +360,117 @@ function Sidebar({ place }) {
       {/* Widget infos clés */}
       <div className="bg-white border border-or/15 p-5">
         <h3 className="font-display font-bold text-lg text-nuit mb-4">Infos pratiques</h3>
-        <div className="flex flex-col gap-3 text-sm">
-          {place.entry_fee !== null && (
-            <div className="flex justify-between border-b border-or/8 pb-3">
-              <span className="text-brun-light">Entrée</span>
-              <span className="font-semibold text-nuit">{place.entry_fee === 0 ? 'Gratuit' : `${place.entry_fee?.toLocaleString()} F`}</span>
-            </div>
-          )}
+        <div className="flex flex-col gap-0 text-sm divide-y divide-or/8">
+
           {place.city && (
-            <div className="flex justify-between border-b border-or/8 pb-3">
-              <span className="text-brun-light">Ville</span>
+            <div className="flex justify-between py-2.5">
+              <span className="text-brun-light">📍 Ville</span>
               <span className="font-semibold text-nuit">{place.city.name}</span>
             </div>
           )}
+
+          {place.entry_fee !== null && place.entry_fee !== undefined && (
+            <div className="flex justify-between py-2.5">
+              <span className="text-brun-light">🎟 Entrée</span>
+              <span className={`font-semibold ${place.entry_fee === 0 ? 'text-green-600' : 'text-nuit'}`}>
+                {place.entry_fee === 0 ? '✓ Gratuit' : `${place.entry_fee?.toLocaleString()} FCFA`}
+              </span>
+            </div>
+          )}
+
           {place.phone && (
-            <div className="flex justify-between border-b border-or/8 pb-3">
-              <span className="text-brun-light">Téléphone</span>
+            <div className="flex justify-between py-2.5">
+              <span className="text-brun-light">📞 Téléphone</span>
               <a href={`tel:${place.phone}`} className="font-semibold text-terracotta hover:underline">{place.phone}</a>
             </div>
           )}
+
           {place.website && (
-            <div className="flex justify-between">
-              <span className="text-brun-light">Site web</span>
-              <a href={place.website} target="_blank" rel="noopener noreferrer" className="font-semibold text-terracotta hover:underline text-xs">
-                Voir →
+            <div className="flex justify-between py-2.5">
+              <span className="text-brun-light">🌐 Site web</span>
+              <a href={place.website} target="_blank" rel="noopener noreferrer"
+                className="font-semibold text-terracotta hover:underline text-xs">
+                Voir le site →
               </a>
+            </div>
+          )}
+
+          {place.address && (
+            <div className="flex justify-between py-2.5 gap-4">
+              <span className="text-brun-light flex-shrink-0">🏠 Adresse</span>
+              <span className="font-semibold text-nuit text-right text-xs">{place.address}</span>
+            </div>
+          )}
+
+          {place.is_unesco && (
+            <div className="flex justify-between py-2.5">
+              <span className="text-brun-light">🏛 Classement</span>
+              <span className="font-semibold text-or">Patrimoine UNESCO</span>
+            </div>
+          )}
+
+          {Number(place.rating) > 0 && (
+            <div className="flex justify-between py-2.5">
+              <span className="text-brun-light">⭐ Note</span>
+              <span className="font-semibold text-nuit">
+                {Number(place.rating).toFixed(1)}/5
+                <span className="text-brun-light font-normal ml-1">({place.review_count} avis)</span>
+              </span>
             </div>
           )}
         </div>
 
+        {/* Horaires */}
+        {place.opening_hours && Object.keys(place.opening_hours).length > 0 && (
+          <div className="mt-4 pt-4 border-t border-or/10">
+            <p className="text-xs font-semibold text-brun uppercase tracking-wider mb-2">🕐 Horaires</p>
+            <div className="flex flex-col gap-1">
+              {Object.entries(place.opening_hours).map(([day, hours]) => (
+                <div key={day} className="flex justify-between text-xs">
+                  <span className="text-brun-light capitalize">{day}</span>
+                  <span className="font-medium text-nuit">{hours}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tags */}
+        {place.tags?.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-or/10 flex flex-wrap gap-2">
+            {place.tags.map(tag => (
+              <span key={tag} className="text-xs bg-sable text-brun px-2 py-1 rounded-sm">{tag}</span>
+            ))}
+          </div>
+        )}
+
         {/* Boutons action */}
         <div className="flex flex-col gap-2 mt-5">
-          <a
-            href={`https://www.google.com/maps?q=${place.latitude},${place.longitude}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full bg-nuit text-sable py-2.5 text-sm font-medium text-center hover:bg-brun transition-colors"
-          >
+          <a href={`https://www.google.com/maps?q=${place.latitude},${place.longitude}`}
+            target="_blank" rel="noopener noreferrer"
+            className="w-full bg-nuit text-sable py-2.5 text-sm font-medium text-center hover:bg-brun transition-colors block">
             📍 Itinéraire Google Maps
           </a>
-          <button className="w-full border border-or/20 text-brun py-2.5 text-sm hover:border-or hover:text-or transition-colors">
-            💾 Sauvegarder
-          </button>
+          {place.phone && (
+            <a href={`tel:${place.phone}`}
+              className="w-full border border-or/20 text-brun py-2.5 text-sm hover:border-or hover:text-or transition-colors text-center block">
+              📞 Appeler
+            </a>
+          )}
+          {place.website && (
+            <a href={place.website} target="_blank" rel="noopener noreferrer"
+              className="w-full border border-or/20 text-brun py-2.5 text-sm hover:border-or hover:text-or transition-colors text-center block">
+              🌐 Site officiel
+            </a>
+          )}
         </div>
       </div>
 
-      {/* Mini carte statique */}
+      {/* Mini carte */}
       {place.latitude && place.longitude && (
         <div className="bg-white border border-or/15 overflow-hidden">
-          <a
-            href={`https://www.google.com/maps?q=${place.latitude},${place.longitude}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href={`https://www.google.com/maps?q=${place.latitude},${place.longitude}`}
+            target="_blank" rel="noopener noreferrer">
             <img
               src={`https://static-maps.yandex.ru/1.x/?lang=fr_FR&ll=${place.longitude},${place.latitude}&z=13&l=map&size=450,200&pt=${place.longitude},${place.latitude},pm2rdl`}
               alt="Localisation"
